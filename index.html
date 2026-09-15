@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF9F6">
+<title>秘書</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>秘</text></svg>">
+<style>
+:root{
+  --paper:#FAF9F6;
+  --card:#FFFFFF;
+  --ink:#15181D;
+  --sub:#6E747E;
+  --navy:#23406E;
+  --navy-soft:#EDF1F8;
+  --red:#B8382F;
+  --red-soft:#FBEDEB;
+  --rule:#E5E2DA;
+  --green:#3B7A5A;
+  --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic Medium",Meiryo,system-ui,sans-serif;
+  --mincho:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"MS PMincho",serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:660px;margin:0 auto;padding:0 18px 120px}
+
+.head{padding:26px 0 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.date-big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.date-sub{font-size:14px;color:var(--sub);margin-top:8px}
+.brand{font-family:var(--mincho);font-size:20px;color:var(--navy);letter-spacing:.14em;white-space:nowrap;padding-bottom:4px;cursor:pointer}
+
+.capture{background:var(--card);border:1.5px solid var(--navy);border-radius:14px;padding:14px 14px 12px;box-shadow:0 2px 0 var(--navy-soft)}
+.capture textarea{
+  width:100%;border:0;outline:0;resize:none;background:transparent;
+  font-family:inherit;font-size:16.5px;line-height:1.6;color:var(--ink);min-height:58px;
+}
+.capture textarea::placeholder{color:#A9AEB6}
+.cap-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
+.hint{font-size:12.5px;color:var(--sub)}
+.btn{
+  font-family:inherit;font-size:15px;font-weight:700;border:0;border-radius:9px;
+  padding:11px 20px;background:var(--navy);color:#fff;cursor:pointer;white-space:nowrap;
+  transition:opacity .15s;
+}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:active:not(:disabled){opacity:.82}
+.btn-ghost{background:transparent;color:var(--navy);padding:8px 2px;font-weight:600;font-size:14px}
+.btn:focus-visible,.tab:focus-visible,.row:focus-visible,.chk:focus-visible{outline:2.5px solid var(--navy);outline-offset:2px}
+
+.toast{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:10px;background:var(--navy-soft);border-radius:10px;padding:10px 14px;font-size:14px;
+}
+.toast.err{background:var(--red-soft);color:var(--red)}
+
+.tabs{display:flex;gap:2px;margin:26px 0 4px;border-bottom:1px solid var(--rule)}
+.tab{
+  font-family:inherit;background:none;border:0;cursor:pointer;
+  padding:10px 14px 11px;font-size:15px;font-weight:600;color:var(--sub);
+  border-bottom:3px solid transparent;margin-bottom:-1px;
+}
+.tab[data-on="1"]{color:var(--ink);border-bottom-color:var(--navy)}
+.tab .n{font-size:12px;color:var(--sub);margin-left:5px;font-variant-numeric:tabular-nums}
+
+.sect{margin-top:26px}
+.sect-h{font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:10px}
+
+.band{background:var(--red);color:#fff;border-radius:12px;padding:14px 16px;margin-top:20px}
+.band-t{font-size:15px;font-weight:700;margin-bottom:8px}
+.band-i{
+  display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid rgba(255,255,255,.28);
+  font-size:15.5px;cursor:pointer;
+}
+.band-i .d{font-size:13px;opacity:.85;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.row{
+  display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;
+  background:var(--card);border:0;border-radius:12px;padding:14px 15px;margin-bottom:8px;
+  font-family:inherit;cursor:pointer;box-shadow:0 1px 0 rgba(21,24,29,.05);
+}
+.time{
+  font-size:25px;font-weight:700;letter-spacing:-.03em;line-height:1.15;
+  font-variant-numeric:tabular-nums;color:var(--navy);min-width:74px;
+}
+.time.sm{font-size:16px;font-weight:700;min-width:58px;padding-top:2px}
+.time .ampm{font-size:12px;font-weight:600;color:var(--sub);display:block;letter-spacing:0}
+.body{flex:1;min-width:0}
+.ttl{font-size:16.5px;font-weight:600;line-height:1.45;word-break:break-word}
+.meta{font-size:13px;color:var(--sub);margin-top:3px;word-break:break-word}
+.ttl.done{color:var(--sub);text-decoration:line-through}
+
+.chk{
+  width:26px;height:26px;border-radius:50%;border:2px solid #C9CDD4;background:transparent;
+  cursor:pointer;flex-shrink:0;margin-top:2px;padding:0;display:grid;place-items:center;
+  transition:border-color .15s,background .15s;
+}
+.chk[data-on="1"]{border-color:var(--green);background:var(--green)}
+.chk svg{opacity:0;transition:opacity .15s}
+.chk[data-on="1"] svg{opacity:1}
+
+.tag{
+  display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:5px;
+  background:var(--navy-soft);color:var(--navy);margin-right:6px;vertical-align:1px;
+}
+.tag.red{background:var(--red-soft);color:var(--red)}
+.tag.soon{background:#FFF3D6;color:#8A6200}
+
+.empty{padding:34px 4px;color:var(--sub);font-size:15px;line-height:1.8}
+.empty b{display:block;color:var(--ink);font-size:16px;font-weight:700;margin-bottom:4px}
+
+.search{
+  width:100%;font-family:inherit;font-size:16px;padding:11px 14px;border:1px solid var(--rule);
+  border-radius:10px;background:var(--card);outline:0;margin-bottom:14px;color:var(--ink);
+}
+.search:focus{border-color:var(--navy)}
+
+.scrim{position:fixed;inset:0;background:rgba(21,24,29,.42);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+@media(min-width:640px){.scrim{align-items:center}}
+.sheet{
+  background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;
+  padding:22px 20px calc(22px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;
+  animation:up .22s cubic-bezier(.2,.8,.3,1);
+}
+@media(min-width:640px){.sheet{border-radius:16px}}
+@keyframes up{from{transform:translateY(18px);opacity:.4}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.sheet{animation:none}}
+.f{margin-bottom:15px}
+.f label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-bottom:6px}
+.f input,.f textarea,.f select{
+  width:100%;font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--rule);
+  border-radius:9px;background:var(--paper);outline:0;color:var(--ink);
+}
+.f input:focus,.f textarea:focus,.f select:focus{border-color:var(--navy);background:var(--card)}
+.f textarea{resize:vertical;min-height:70px}
+.seg{display:flex;gap:6px}
+.seg button{
+  flex:1;font-family:inherit;font-size:14.5px;font-weight:700;padding:11px 0;border-radius:9px;
+  border:1.5px solid var(--rule);background:var(--paper);color:var(--sub);cursor:pointer;
+}
+.seg button[data-on="1"]{border-color:var(--navy);background:var(--navy);color:#fff}
+.sheet-foot{display:flex;gap:10px;align-items:center;margin-top:20px}
+.sheet-foot .btn{flex:1;padding:13px 0;font-size:16px}
+.del{font-family:inherit;background:none;border:0;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;padding:12px 8px}
+
+.row-anim{animation:pop .3s ease}
+@keyframes pop{from{background:var(--navy-soft)}to{background:var(--card)}}
+@media(prefers-reduced-motion:reduce){.row-anim{animation:none}}
+
+.login{max-width:380px;margin:0 auto;padding:80px 22px}
+.login .brand{font-size:28px;text-align:center;display:block;margin-bottom:6px;padding:0}
+.login .lead{text-align:center;color:var(--sub);font-size:14px;margin-bottom:28px}
+.login .btn{width:100%;padding:13px 0;font-size:16px;margin-top:6px}
+.login .err{color:var(--red);font-size:13.5px;margin-top:12px;text-align:center}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const SUPABASE_URL = "https://bjturypmnwtoklnsxqyw.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqdHVyeXBtbnd0b2tsbnN4cXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MzY3MzMsImV4cCI6MjEwNTAxMjczM30.lSZzNrXr63a5c6lwaGmnHovJKWYUrvl9pfPQLAjvkVw";
+
+const CLASSIFY_URL = SUPABASE_URL + "/functions/v1/classify";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ---------- date utils ---------- */
+const WD = ["日","月","火","水","木","金","土"];
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayStr = () => ymd(new Date());
+
+function toDate(when){
+  if(!when) return null;
+  const [dp,tp] = when.split("T");
+  const [y,m,d] = dp.split("-").map(Number);
+  if(!y) return null;
+  if(tp){ const [hh,mm] = tp.split(":").map(Number); return new Date(y,m-1,d,hh||0,mm||0); }
+  return new Date(y,m-1,d);
+}
+const dateOf = w => w ? w.split("T")[0] : null;
+const timeOf = w => (w && w.includes("T")) ? w.split("T")[1] : null;
+
+function dayLabel(ds){
+  const d = toDate(ds);
+  if(!d) return "";
+  const diff = Math.round((d - toDate(todayStr()))/86400000);
+  if(diff===0) return "今日";
+  if(diff===1) return "明日";
+  if(diff===-1) return "昨日";
+  if(diff<0) return `${Math.abs(diff)}日前`;
+  return `${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+}
+
+/* ---------- row <-> item ---------- */
+function fromRow(r){
+  const when = r.due_date ? (r.due_time ? `${r.due_date}T${String(r.due_time).slice(0,5)}` : r.due_date) : null;
+  return { id:r.id, kind:r.kind, title:r.title, when, place:r.place||"", note:r.note||"",
+           done:!!r.done, created:new Date(r.created_at).getTime() };
+}
+function toRow(i){
+  return { id:i.id, kind:i.kind, title:i.title,
+           due_date:dateOf(i.when), due_time:timeOf(i.when) || null,
+           place:i.place||"", note:i.note||"", done:!!i.done, updated_at:new Date().toISOString() };
+}
+
+/* ---------- AI 仕分け ---------- */
+async function classify(text, token){
+  const now = new Date();
+  const prompt = `今は ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日(${WD[now.getDay()]}) ${pad(now.getHours())}:${pad(now.getMinutes())} 日本時間。
+
+次の走り書きを、項目に分解してください。一文に複数の用件が混ざっていれば分けます。
+
+出力はJSON配列のみ。前置き・説明・マークダウンのコードフェンスは一切書かない。
+各要素:
+{"kind":"event"|"task"|"memo","title":"短い見出し","when":"YYYY-MM-DDTHH:mm" または "YYYY-MM-DD" または null,"place":"場所 or 空文字","note":"補足 or 空文字"}
+
+判定の基準:
+- event = 決まった日時に人と会う/出向く/始まるもの（打合せ、訪問、会食、出張、通院）
+- task = 自分がやる作業。締切があれば when に日付を入れる
+- memo = 日時も作業もない、覚えておきたい情報
+- 「来週火曜」「明後日」などは実際の日付に直す
+- 時刻の指定がなければ日付だけ("YYYY-MM-DD")。日付も不明なら null
+- title は原文の言葉を活かして20字以内
+
+走り書き:
+${text}`;
+
+  const res = await fetch(CLASSIFY_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":"Bearer "+token },
+    body: JSON.stringify({ prompt })
+  });
+  if(!res.ok) throw new Error("api");
+  const data = await res.json();
+  const raw = (data.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n")
+    .replace(/```json|```/g,"").trim();
+  const arr = JSON.parse(raw.slice(raw.indexOf("["), raw.lastIndexOf("]")+1));
+  if(!Array.isArray(arr) || !arr.length) throw new Error("empty");
+  return arr;
+}
+
+const Check = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M2.5 7.4l3 3L11.5 3.9" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+/* ============================================================ */
+function Login({ onIn }){
+  const [mail,setMail] = useState("");
+  const [pw,setPw] = useState("");
+  const [err,setErr] = useState("");
+  const [busy,setBusy] = useState(false);
+
+  async function go(){
+    setBusy(true); setErr("");
+    const { data, error } = await db.auth.signInWithPassword({ email:mail, password:pw });
+    setBusy(false);
+    if(error){ setErr("メールアドレスかパスワードが違います"); return; }
+    onIn(data.session);
+  }
+  return (
+    <div className="login">
+      <div className="brand">秘書</div>
+      <div className="lead">放り込めば、忘れない</div>
+      <div className="f"><label>メールアドレス</label>
+        <input type="email" value={mail} onChange={e=>setMail(e.target.value)} autoComplete="username"/></div>
+      <div className="f"><label>パスワード</label>
+        <input type="password" value={pw} onChange={e=>setPw(e.target.value)} autoComplete="current-password"
+               onKeyDown={e=>{ if(e.key==="Enter") go(); }}/></div>
+      <button className="btn" onClick={go} disabled={busy||!mail||!pw}>{busy?"確認中…":"入る"}</button>
+      {err && <div className="err">{err}</div>}
+    </div>
+  );
+}
+
+/* ============================================================ */
+function App(){
+  const [session,setSession] = useState(null);
+  const [booted,setBooted] = useState(false);
+  const [items,setItems] = useState([]);
+  const [ready,setReady] = useState(false);
+  const [tab,setTab] = useState("today");
+  const [text,setText] = useState("");
+  const [busy,setBusy] = useState(false);
+  const [toast,setToast] = useState(null);
+  const [lastBatch,setLastBatch] = useState(null);
+  const [editing,setEditing] = useState(null);
+  const [fresh,setFresh] = useState([]);
+  const [q,setQ] = useState("");
+
+  useEffect(()=>{
+    db.auth.getSession().then(({data})=>{ setSession(data.session); setBooted(true); });
+    const { data:sub } = db.auth.onAuthStateChange((_e,s)=>setSession(s));
+    return ()=>sub.subscription.unsubscribe();
+  },[]);
+
+  useEffect(()=>{
+    if(!session){ setReady(false); return; }
+    db.from("items").select("*").order("created_at",{ascending:true}).then(({data,error})=>{
+      if(!error && data) setItems(data.map(fromRow));
+      if(error) setToast({err:true,msg:"読み込みに失敗しました"});
+      setReady(true);
+    });
+  },[session]);
+
+  async function drop(){
+    const t = text.trim();
+    if(!t || busy) return;
+    setBusy(true); setToast(null);
+    let parsed;
+    try{ parsed = await classify(t, session.access_token); }
+    catch{ parsed = [{kind:"memo", title:t.slice(0,40), when:null, place:"", note:t}]; }
+
+    const stamp = Date.now();
+    const made = parsed.map((p,i)=>({
+      id:`${stamp}-${i}`,
+      kind:["event","task","memo"].includes(p.kind)?p.kind:"memo",
+      title:(p.title||t).slice(0,80),
+      when:p.when||null, place:p.place||"", note:p.note||"",
+      done:false, created:stamp
+    }));
+
+    const { error } = await db.from("items").insert(made.map(toRow));
+    setBusy(false);
+    if(error){ setToast({err:true,msg:"保存できませんでした"}); return; }
+
+    setItems([...items,...made]);
+    setLastBatch(made.map(m=>m.id));
+    setFresh(made.map(m=>m.id));
+    setTimeout(()=>setFresh([]),1200);
+    setText("");
+    const kinds = made.map(m=> m.kind==="event"?"予定":m.kind==="task"?"やること":"メモ");
+    setToast({msg:`${[...new Set(kinds)].join("・")}に ${made.length}件 登録しました`, undo:true});
+    if(made.some(m=>m.kind==="event")) setTab("today");
+  }
+
+  async function undo(){
+    if(!lastBatch) return;
+    await db.from("items").delete().in("id",lastBatch);
+    setItems(items.filter(i=>!lastBatch.includes(i.id)));
+    setLastBatch(null); setToast(null);
+  }
+
+  async function upsert(it){
+    const exists = items.some(x=>x.id===it.id);
+    const { error } = exists
+      ? await db.from("items").update(toRow(it)).eq("id",it.id)
+      : await db.from("items").insert(toRow(it));
+    if(error){ setToast({err:true,msg:"保存できませんでした"}); return; }
+    setItems(exists ? items.map(x=>x.id===it.id?it:x) : [...items,it]);
+    setEditing(null);
+  }
+  async function remove(id){
+    await db.from("items").delete().eq("id",id);
+    setItems(items.filter(x=>x.id!==id));
+    setEditing(null);
+  }
+  async function toggle(id){
+    const it = items.find(x=>x.id===id);
+    const next = !it.done;
+    setItems(items.map(x=>x.id===id?{...x,done:next}:x));
+    const { error } = await db.from("items").update({done:next,updated_at:new Date().toISOString()}).eq("id",id);
+    if(error){ setItems(items); setToast({err:true,msg:"更新できませんでした"}); }
+  }
+
+  const B = useMemo(()=>{
+    const today = todayStr(), now = new Date();
+    const live = items.filter(i=>!i.done);
+    const dOf = i => dateOf(i.when);
+
+    const overdue = live.filter(i=>i.when && dOf(i)<today).sort((a,b)=>a.when<b.when?-1:1);
+    const todayEvents = live.filter(i=>i.kind==="event" && dOf(i)===today).sort((a,b)=>a.when<b.when?-1:1);
+    const todayTasks = live.filter(i=>i.kind==="task" && dOf(i)===today).sort((a,b)=>a.when<b.when?-1:1);
+    const upcoming = live.filter(i=>i.kind==="event" && dOf(i)>today).sort((a,b)=>a.when<b.when?-1:1);
+    const someday = live.filter(i=>i.kind==="task" && !i.when);
+    const allEvents = live.filter(i=>i.kind==="event").sort((a,b)=>((a.when||"9")<(b.when||"9")?-1:1));
+    const allTasks = live.filter(i=>i.kind==="task").sort((a,b)=>((a.when||"9999")<(b.when||"9999")?-1:1));
+    const doneTasks = items.filter(i=>i.kind==="task" && i.done);
+    const memos = items.filter(i=>i.kind==="memo").sort((a,b)=>b.created-a.created);
+    const soon = todayEvents.find(e=>{ const d=toDate(e.when); return d && d>now && d-now<7200000; });
+
+    return {overdue,todayEvents,todayTasks,upcoming,someday,allEvents,allTasks,doneTasks,memos,soon};
+  },[items]);
+
+  if(!booted) return <div className="wrap"><div className="empty" style={{paddingTop:80}}>…</div></div>;
+  if(!session) return <Login onIn={setSession}/>;
+  if(!ready) return <div className="wrap"><div className="empty" style={{paddingTop:80}}>読み込んでいます…</div></div>;
+
+  const now = new Date();
+
+  return (
+    <React.Fragment>
+      <div className="wrap">
+        <header className="head">
+          <div>
+            <div className="date-big">
+              {now.getMonth()+1}月{now.getDate()}日
+              <span style={{fontSize:20,marginLeft:6}}>({WD[now.getDay()]})</span>
+            </div>
+            <div className="date-sub">
+              {B.soon ? `まもなく ${timeOf(B.soon.when)?.slice(0,5)} ${B.soon.title}`
+               : B.overdue.length ? `過ぎているものが ${B.overdue.length}件`
+               : (B.todayEvents.length||B.todayTasks.length) ? `今日は 予定${B.todayEvents.length}・やること${B.todayTasks.length}`
+               : "今日の予定はありません"}
+            </div>
+          </div>
+          <div className="brand" onClick={()=>{ if(confirm("ログアウトしますか？")) db.auth.signOut(); }}>秘書</div>
+        </header>
+
+        <div className="capture">
+          <textarea value={text} onChange={e=>setText(e.target.value)}
+            onKeyDown={e=>{ if((e.metaKey||e.ctrlKey)&&e.key==="Enter") drop(); }}
+            placeholder="来週火曜14時に田中さんと打合せ、見積書は金曜までに送る、駐車場の契約更新は11月" rows={2}/>
+          <div className="cap-foot">
+            <span className="hint">思いついた順のままで大丈夫です</span>
+            <button className="btn" onClick={drop} disabled={busy||!text.trim()}>{busy?"仕分け中…":"放り込む"}</button>
+          </div>
+        </div>
+
+        {toast && (
+          <div className={"toast"+(toast.err?" err":"")}>
+            <span>{toast.msg}</span>
+            {toast.undo && <button className="btn btn-ghost" onClick={undo}>取り消す</button>}
+          </div>
+        )}
+
+        {B.overdue.length>0 && (
+          <div className="band">
+            <div className="band-t">日付が過ぎています</div>
+            {B.overdue.slice(0,6).map(i=>(
+              <div key={i.id} className="band-i" onClick={()=>setEditing(i)}>
+                <span className="d">{dayLabel(dateOf(i.when))}</span>
+                <span style={{flex:1}}>{i.title}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <nav className="tabs">
+          {[["today","今日",null],["events","予定",B.allEvents.length],
+            ["tasks","やること",B.allTasks.length],["memos","メモ",B.memos.length]].map(([k,label,n])=>(
+            <button key={k} className="tab" data-on={tab===k?"1":"0"} onClick={()=>setTab(k)}>
+              {label}{n?<span className="n">{n}</span>:null}
+            </button>
+          ))}
+        </nav>
+
+        {tab==="today" && <Today B={B} fresh={fresh} onOpen={setEditing} onToggle={toggle} onAdd={()=>setEditing(blank("task"))}/>}
+        {tab==="events" && <List rows={B.allEvents} fresh={fresh} onOpen={setEditing}
+          emptyT="予定はまだありません" emptyB="上の欄に「◯日◯時に〜」と書けば、日時を読み取ってここに並びます。"/>}
+        {tab==="tasks" && <Tasks B={B} fresh={fresh} onOpen={setEditing} onToggle={toggle}/>}
+        {tab==="memos" && <Memos rows={B.memos} q={q} setQ={setQ} onOpen={setEditing} fresh={fresh}/>}
+
+        <div style={{marginTop:30,textAlign:"center"}}>
+          <button className="btn btn-ghost"
+            onClick={()=>setEditing(blank(tab==="memos"?"memo":tab==="events"?"event":"task"))}>
+            ＋ 自分で追加する
+          </button>
+        </div>
+      </div>
+      {editing && <Sheet item={editing} onSave={upsert} onDelete={remove} onClose={()=>setEditing(null)}/>}
+    </React.Fragment>
+  );
+}
+
+function blank(kind){
+  return { id:`m-${Date.now()}`, kind, title:"", when:null, place:"", note:"", done:false, created:Date.now(), isNew:true };
+}
+
+function Today({B,fresh,onOpen,onToggle,onAdd}){
+  const nothing = !B.todayEvents.length && !B.todayTasks.length && !B.someday.length && !B.upcoming.length;
+  if(nothing) return (
+    <div className="empty"><b>まだ何もありません</b>
+      上の欄に一行放り込んでください。予定・やること・メモに自動で振り分けます。</div>
+  );
+  return (
+    <React.Fragment>
+      {B.todayEvents.length>0 && (
+        <section className="sect"><div className="sect-h">今日の予定</div>
+          {B.todayEvents.map(i=><EventRow key={i.id} i={i} big fresh={fresh} onOpen={onOpen}/>)}
+        </section>
+      )}
+      {(B.todayTasks.length>0 || B.someday.length>0) && (
+        <section className="sect"><div className="sect-h">今日やること</div>
+          {B.todayTasks.map(i=><TaskRow key={i.id} i={i} fresh={fresh} onOpen={onOpen} onToggle={onToggle}/>)}
+          {B.someday.slice(0,4).map(i=><TaskRow key={i.id} i={i} fresh={fresh} onOpen={onOpen} onToggle={onToggle}/>)}
+        </section>
+      )}
+      {B.upcoming.length>0 && (
+        <section className="sect"><div className="sect-h">この先</div>
+          {B.upcoming.slice(0,5).map(i=><EventRow key={i.id} i={i} fresh={fresh} onOpen={onOpen} showDay/>)}
+        </section>
+      )}
+    </React.Fragment>
+  );
+}
+
+function EventRow({i,big,showDay,fresh,onOpen}){
+  const t = timeOf(i.when);
+  const [hh,mm] = t ? t.split(":") : [];
+  return (
+    <button className={"row"+(fresh.includes(i.id)?" row-anim":"")} onClick={()=>onOpen(i)}>
+      <div className={"time"+(big?"":" sm")}>
+        {t ? <React.Fragment>{hh}:{mm}{showDay && <span className="ampm">{dayLabel(dateOf(i.when))}</span>}</React.Fragment>
+           : <span style={{fontSize:15}}>{showDay?dayLabel(dateOf(i.when)):"終日"}</span>}
+      </div>
+      <div className="body">
+        <div className="ttl">{i.title}</div>
+        {(i.place||i.note) && <div className="meta">{[i.place,i.note].filter(Boolean).join(" / ")}</div>}
+      </div>
+    </button>
+  );
+}
+
+function TaskRow({i,fresh,onOpen,onToggle}){
+  const d = dateOf(i.when);
+  const late = d && d<todayStr();
+  const today = d===todayStr();
+  return (
+    <div className={"row"+(fresh.includes(i.id)?" row-anim":"")} style={{cursor:"default"}}>
+      <button className="chk" data-on={i.done?"1":"0"}
+        aria-label={i.done?"未完了に戻す":"完了にする"} onClick={()=>onToggle(i.id)}><Check/></button>
+      <div className="body" onClick={()=>onOpen(i)} style={{cursor:"pointer"}}>
+        <div className={"ttl"+(i.done?" done":"")}>
+          {d && <span className={"tag"+(late?" red":today?" soon":"")}>{dayLabel(d)}</span>}
+          {i.title}
+        </div>
+        {i.note && <div className="meta">{i.note}</div>}
+      </div>
+    </div>
+  );
+}
+
+function List({rows,fresh,onOpen,emptyT,emptyB}){
+  if(!rows.length) return <div className="empty"><b>{emptyT}</b>{emptyB}</div>;
+  const groups = [];
+  rows.forEach(r=>{
+    const d = dateOf(r.when) || "—";
+    const last = groups[groups.length-1];
+    if(last && last.d===d) last.rows.push(r); else groups.push({d,rows:[r]});
+  });
+  return (
+    <React.Fragment>
+      {groups.map(g=>(
+        <section className="sect" key={g.d}>
+          <div className="sect-h">{g.d==="—"?"日付未定":dayLabel(g.d)}</div>
+          {g.rows.map(i=><EventRow key={i.id} i={i} big fresh={fresh} onOpen={onOpen}/>)}
+        </section>
+      ))}
+    </React.Fragment>
+  );
+}
+
+function Tasks({B,fresh,onOpen,onToggle}){
+  const [showDone,setShowDone] = useState(false);
+  if(!B.allTasks.length && !B.doneTasks.length) return (
+    <div className="empty"><b>やることはありません</b>
+      「〜を送る」「〜に電話する」のように書けば、ここに溜まります。</div>
+  );
+  const dated = B.allTasks.filter(t=>t.when);
+  const undated = B.allTasks.filter(t=>!t.when);
+  return (
+    <React.Fragment>
+      {dated.length>0 && (
+        <section className="sect"><div className="sect-h">期限あり</div>
+          {dated.map(i=><TaskRow key={i.id} i={i} fresh={fresh} onOpen={onOpen} onToggle={onToggle}/>)}
+        </section>
+      )}
+      {undated.length>0 && (
+        <section className="sect"><div className="sect-h">いつか</div>
+          {undated.map(i=><TaskRow key={i.id} i={i} fresh={fresh} onOpen={onOpen} onToggle={onToggle}/>)}
+        </section>
+      )}
+      {B.doneTasks.length>0 && (
+        <section className="sect">
+          <button className="btn btn-ghost" onClick={()=>setShowDone(!showDone)}>
+            {showDone?"終わったものを隠す":`終わったもの ${B.doneTasks.length}件を見る`}
+          </button>
+          {showDone && <div style={{marginTop:10}}>
+            {B.doneTasks.map(i=><TaskRow key={i.id} i={i} fresh={fresh} onOpen={onOpen} onToggle={onToggle}/>)}
+          </div>}
+        </section>
+      )}
+    </React.Fragment>
+  );
+}
+
+function Memos({rows,q,setQ,onOpen,fresh}){
+  const hit = rows.filter(r=>!q || (r.title+r.note).toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="sect">
+      <input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="メモを探す"/>
+      {!hit.length ? (
+        <div className="empty"><b>{q?"見つかりませんでした":"メモはまだありません"}</b>
+          {q?"別の言葉で探してみてください。":"日時も作業もない覚え書きは、ここに残ります。"}</div>
+      ) : hit.map(i=>(
+        <button key={i.id} className={"row"+(fresh.includes(i.id)?" row-anim":"")} onClick={()=>onOpen(i)}>
+          <div className="body">
+            <div className="ttl">{i.title}</div>
+            {i.note && i.note!==i.title && <div className="meta">{i.note}</div>}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Sheet({item,onSave,onDelete,onClose}){
+  const [f,setF] = useState({...item, d:dateOf(item.when)||"", t:(timeOf(item.when)||"").slice(0,5)});
+  const set = (k,v)=>setF(p=>({...p,[k]:v}));
+  function commit(){
+    const when = f.d ? (f.t ? `${f.d}T${f.t}` : f.d) : null;
+    const {d,t,isNew,...rest} = f;
+    onSave({...rest, when, title:(f.title||"無題").trim()});
+  }
+  return (
+    <div className="scrim" onClick={onClose}>
+      <div className="sheet" onClick={e=>e.stopPropagation()}>
+        <div className="f"><label>種類</label>
+          <div className="seg">
+            {[["event","予定"],["task","やること"],["memo","メモ"]].map(([k,l])=>(
+              <button key={k} data-on={f.kind===k?"1":"0"} onClick={()=>set("kind",k)}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div className="f"><label>内容</label>
+          <input value={f.title} onChange={e=>set("title",e.target.value)} placeholder="何をする？" autoFocus={item.isNew}/></div>
+        {f.kind!=="memo" && (
+          <div style={{display:"flex",gap:10}}>
+            <div className="f" style={{flex:1.3}}><label>{f.kind==="task"?"締切":"日付"}</label>
+              <input type="date" value={f.d} onChange={e=>set("d",e.target.value)}/></div>
+            <div className="f" style={{flex:1}}><label>時刻</label>
+              <input type="time" value={f.t} onChange={e=>set("t",e.target.value)} disabled={!f.d}/></div>
+          </div>
+        )}
+        {f.kind==="event" && (
+          <div className="f"><label>場所</label>
+            <input value={f.place} onChange={e=>set("place",e.target.value)} placeholder="どこで？"/></div>
+        )}
+        <div className="f"><label>補足</label>
+          <textarea value={f.note} onChange={e=>set("note",e.target.value)}/></div>
+        <div className="sheet-foot">
+          {!item.isNew && <button className="del" onClick={()=>onDelete(item.id)}>削除</button>}
+          <button className="btn" onClick={commit}>保存する</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
