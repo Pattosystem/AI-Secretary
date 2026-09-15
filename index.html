@@ -299,6 +299,47 @@ ${text}`;
   return arr;
 }
 
+/* ---------- 質問に答える ---------- */
+async function askClaude(question, token, items){
+  const now = new Date();
+  const list = items.slice(0,300).map(i=>({
+    id:i.id, 種類:KIND_JA[i.kind], 内容:i.title,
+    日時:i.when ? whenLabel(i.when) : "",
+    場所:i.place||"", 補足:(i.note||"").slice(0,200),
+    記録日:new Date(i.created).toLocaleDateString("ja-JP"),
+    状態:i.done?"完了":""
+  }));
+  const prompt = `今は ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日(${WD[now.getDay()]})。
+あなたは坂口さんの秘書です。下の「記録」だけを根拠にして、質問に日本語で答えてください。
+
+答え方:
+- 記録にないことは推測せず「その話は記録に残っていません」と答える
+- 「先週」「この前」などは今日を基準に判断する
+- 3〜5文程度。箇条書きが分かりやすければ使ってよい
+- 金額・日付・固有名詞は記録のまま正確に書く
+
+出力はJSONのみ。前置きもマークダウンのコードフェンスも書かない。
+{"answer":"答えの文章","ids":["根拠にした記録のid"]}
+
+記録:
+${JSON.stringify(list)}
+
+質問:
+${question}`;
+
+  const res = await fetch(CLASSIFY_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey":SUPABASE_KEY, "Authorization":"Bearer "+token },
+    body: JSON.stringify({ prompt })
+  });
+  if(!res.ok) throw new Error("api");
+  const data = await res.json();
+  const raw = (data.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n")
+    .replace(/```json|```/g,"").trim();
+  const obj = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}")+1));
+  return { answer: obj.answer || "うまく答えられませんでした。", ids: Array.isArray(obj.ids)?obj.ids:[] };
+}
+
 /* ============================================================ */
 function Login({ onIn }){
   const [mail,setMail]=useState(""), [pw,setPw]=useState("");
@@ -339,6 +380,8 @@ function App(){
   const [fresh,setFresh]=useState([]);
   const [editing,setEditing]=useState(null);
   const [q,setQ]=useState("");
+  const [asking,setAsking]=useState(false);
+  const [answer,setAnswer]=useState(null);
 
   useEffect(()=>{
     db.auth.getSession().then(({data})=>{ setSession(data.session); setBooted(true); });
@@ -388,6 +431,19 @@ function App(){
       ? `そのまま記憶しました。うまく整理できなかったので、メモとして残しています。`
       : `覚えておきます。${kinds}として${made.length}件、記憶しました。日時や期限のあるものは、必要なタイミングでお知らせします。`,
       undo:true });
+  }
+
+  async function askSAI(question){
+    const t=(question||"").trim();
+    if(!t || asking) return;
+    setView("search"); setQ(t); setAsking(true); setAnswer(null);
+    try{
+      const r = await askClaude(t, session.access_token, B.recent);
+      setAnswer({ text:r.answer, rows:B.recent.filter(x=>r.ids.includes(x.id)) });
+    }catch(e){
+      setAnswer({ err:true, text:"うまく答えられませんでした。少し待ってからもう一度お試しください。" });
+    }
+    setAsking(false);
   }
 
   async function undo(){
@@ -525,16 +581,35 @@ function App(){
         {view==="search" && (
           <React.Fragment>
             <div className="hello" style={{marginTop:0}}>過去を探す</div>
-            <p className="lead">言葉の一部を入れると、記憶の中から探します。</p>
-            <input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="たとえば「Jalupro」「田中」「見積」" autoFocus/>
-            <section className="memories">
-              {(() => {
-                if(!q.trim()) return <div className="empty">探したい言葉を入れてください。</div>;
-                const hit = B.recent.filter(r=>(r.title+r.note+r.place).toLowerCase().includes(q.trim().toLowerCase()));
-                if(!hit.length) return <div className="empty"><b>見つかりませんでした</b>別の言葉で探してみてください。</div>;
-                return hit.map(i=><Memory key={i.id} i={i} fresh={fresh} onOpen={setEditing} onToggle={toggle}/>);
-              })()}
-            </section>
+            <p className="lead">聞きたいことをそのまま書いてください。記録の中から探して答えます。</p>
+            <div style={{display:"flex",gap:9,alignItems:"flex-start"}}>
+              <input className="search" style={{marginBottom:0}} value={q}
+                onChange={e=>setQ(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter") askSAI(q); }}
+                placeholder="たとえば「先週話した仕入先の話ってどんな内容やった？」" autoFocus/>
+              <button className="primary" style={{marginLeft:0,padding:"12px 22px"}}
+                onClick={()=>askSAI(q)} disabled={asking||!q.trim()}>{asking?"考えています…":"聞く"}</button>
+            </div>
+
+            {answer && (
+              <div className={"reply"+(answer.err?" err":"")}>
+                {!answer.err && <React.Fragment><b>SAI</b><br/></React.Fragment>}
+                <span style={{whiteSpace:"pre-wrap"}}>{answer.text}</span>
+              </div>
+            )}
+
+            {answer && !answer.err && answer.rows && answer.rows.length>0 && (
+              <React.Fragment>
+                <div className="sectionTitle"><h3>もとになった記憶</h3></div>
+                <section className="memories">
+                  {answer.rows.map(i=><Memory key={i.id} i={i} fresh={fresh} onOpen={setEditing} onToggle={toggle}/>)}
+                </section>
+              </React.Fragment>
+            )}
+
+            {!answer && !asking && (
+              <div className="empty">日付や言い回しが曖昧でも大丈夫です。「先週」「この前」もSAIが判断します。</div>
+            )}
           </React.Fragment>
         )}
 
@@ -615,11 +690,8 @@ function App(){
           <h3>💭 こんなふうに聞けます</h3>
           <p>SAIは記録した内容から、必要な情報を探して答えます。</p>
           <div className="chips">
-            {[{label:"この前のPRXの話は？",q:"PRX"},
-              {label:"韓国の仕入先の話を探して",q:"韓国"},
-              {label:"今週何か予定あった？",go:"memory"}].map(c=>(
-              <button className="chip" key={c.label}
-                onClick={()=>{ if(c.go){ setView(c.go); } else { setQ(c.q); setView("search"); } }}>{c.label}</button>
+            {["この前のPRXの話は？","韓国の仕入先の話を探して","今週何か予定あった？"].map(c=>(
+              <button className="chip" key={c} onClick={()=>askSAI(c)}>{c}</button>
             ))}
           </div>
         </section>
