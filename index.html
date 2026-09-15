@@ -211,7 +211,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const CLASSIFY_URL = SUPABASE_URL + "/functions/v1/classify";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 
 /* ---------- 日付 ---------- */
 const WD = ["日","月","火","水","木","金","土"];
@@ -352,7 +352,7 @@ function App(){
   useEffect(()=>{
     db.auth.getSession().then(({data})=>{ setSession(data.session); setBooted(true); });
     const { data:sub } = db.auth.onAuthStateChange((_e,s)=>setSession(s));
-    
+
         const toggleVoice = () => {
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (!SpeechRecognition) {
